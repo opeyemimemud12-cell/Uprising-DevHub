@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Uprising DevHub</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <div class="logo">Uprising DevHub</div>
+      <div class="nav-actions">
+        <div id="profileSection" class="profile-section hidden">
+          <div id="profileAvatar" class="profile-avatar" title="Profile"></div>
+          <span id="profileEmail" class="profile-email"></span>
+          <button id="uploadGameBtn" class="btn small">Upload Game</button>
+          <button id="profileLogout" class="btn small transparent">Log out</button>
+        </div>
+        <div id="authSection" class="auth-section">
+          <button id="loginBtn" class="btn small transparent">Log in</button>
+          <button id="signupBtn" class="btn small">Sign up</button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-inner">
+        <h1 class="site-title">Uprising DevHub</h1>
+        <p class="subtitle">Discover and showcase indie games</p>
+        <div class="hero-ctas">
+          <button id="ctaSubmit" class="btn cta">Submit your game</button>
+          <a href="#categories" class="btn ghost">Explore games</a>
+        </div>
+        <div class="search-wrap">
+          <input type="text" id="searchInput" class="search-bar" placeholder="Search games by title... (Press Enter)">
+        </div>
+      </div>
+      <div class="hero-anim" aria-hidden="true"></div>
+    </section>
+
+    <section id="features" class="features">
+      <div class="feature">Developer Profiles</div>
+      <div class="feature">Game Submissions</div>
+      <div class="feature">Community & Comments</div>
+    </section>
+
+    <section id="categories" class="categories">
+      <h2 class="section-title">Categories</h2>
+
+      <div id="categoryContainer">
+        <!-- Category rows injected by JS -->
+      </div>
+
+      <div class="next-page-wrap">
+        <button id="nextPage" class="btn">Next Page</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Submission Modal -->
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-panel">
+      <button id="closeModal" class="modal-close">✕</button>
+      <h3>Submit a Game</h3>
+      <div class="warning-card">
+        <strong>Warning:</strong> Ensure your download link is safe, working, and direct. Avoid duplicate screenshots.
+      </div>
+
+      <form id="submitForm">
+        <label>Game Title<input type="text" name="title" required></label>
+        <label>Genre
+          <select name="genre" required>
+            <option value="">Select genre</option>
+          </select>
+        </label>
+        <label>Description<textarea name="description" rows="4"></textarea></label>
+        <label>Download Link<input type="url" name="link"></label>
+        <label>Screenshots (max 10)
+          <input type="file" id="screenshots" accept="image/*" multiple>
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="btn">Submit</button>
+          <button type="button" id="cancelSubmit" class="btn transparent">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Simple login/signup placeholders -->
+  <div id="authModal" class="modal hidden">
+    <div class="modal-panel">
+      <button id="closeAuth" class="modal-close">✕</button>
+      <h3 id="authTitle">Log in</h3>
+      <form id="authForm">
+        <label>Email<input type="email" name="email" required></label>
+        <label>Password<input type="password" name="password" required></label>
+        <div class="form-actions">
+          <button type="submit" class="btn">Continue</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profileModal" class="modal hidden">
+    <div class="modal-panel">
+      <button id="closeProfile" class="modal-close">✕</button>
+      <h3>My Profile</h3>
+      <form id="profileForm">
+        <label>Email<input type="email" id="profileFormEmail" disabled></label>
+        <label>Bio<textarea id="profileFormBio" rows="3" placeholder="Tell us about yourself..."></textarea></label>
+        <div class="form-actions">
+          <button type="submit" class="btn">Save Profile</button>
+          <button type="button" id="cancelProfile" class="btn transparent">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "uprising-devhub",
+  "version": "1.0.0",
+  "description": "Modern indie game developer platform starter",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "live-server",
+    "serve": "npx http-server"
+  },
+  "keywords": ["indie", "games", "devhub", "platform"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "http-server": "^14.1.1"
+  }
+}
