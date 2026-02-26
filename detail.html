@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Uprising DevHub</title>
+  <title>Game Details</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -26,40 +26,12 @@
   </header>
 
   <main>
-    <section class="hero">
-      <div class="hero-inner">
-        <h1 class="site-title">Uprising DevHub</h1>
-        <p class="subtitle">Discover and showcase indie games</p>
-        <div class="hero-ctas">
-          <button id="ctaSubmit" class="btn cta">Submit your game</button>
-          <a href="#categories" class="btn ghost">Explore games</a>
-        </div>
-        <div class="search-wrap">
-          <input type="text" id="searchInput" class="search-bar" placeholder="Search games by title... (Press Enter)">
-        </div>
-      </div>
-      <div class="hero-anim" aria-hidden="true"></div>
-    </section>
-
-    <section id="features" class="features">
-      <div class="feature">Developer Profiles</div>
-      <div class="feature">Game Submissions</div>
-      <div class="feature">Community & Comments</div>
-    </section>
-
-    <section id="categories" class="categories">
-      <h2 class="section-title">Categories</h2>
-
-      <div id="categoryContainer">
-        <!-- Category rows injected by JS -->
-      </div>
-
-      <div class="next-page-wrap">
-        <button id="nextPage" class="btn">Next Page</button>
-      </div>
+    <section id="gameDetail" class="categories">
+      <!-- details injected by script -->
     </section>
   </main>
 
+  <!-- Include existing modals so auth/profile still work -->
   <!-- Submission Modal -->
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-panel">

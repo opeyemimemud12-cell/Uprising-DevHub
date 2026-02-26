@@ -7,7 +7,7 @@
   --glass: rgba(255,255,255,0.06);
 }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#0b0b0f;color:var(--white)}
+html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);color:var(--white)}
 a{color:inherit;text-decoration:none}
 
 .nav{display:flex;justify-content:space-between;align-items:center;padding:18px 28px}
@@ -32,6 +32,55 @@ a{color:inherit;text-decoration:none}
 .btn.transparent{background:transparent;border:0;color:var(--white)}
 .btn.small{padding:8px 10px;border-radius:8px}
 .btn.cta{font-weight:700;font-size:1rem}
+
+/* download button style */
+.btn.download{background:linear-gradient(90deg,var(--blue2),var(--blue1));
+  border:2px solid var(--white);
+  padding:12px 20px;
+  border-radius:20px;
+  box-shadow:0 4px 12px rgba(0,198,255,0.4);
+  transition:all .2s ease;
+  color:var(--white);
+}
+.btn.download:hover{filter:brightness(1.1);transform:scale(1.05);}
+
+/* genre select styles */
+.genre-select{
+  background:linear-gradient(135deg,#00C6FF,#00F5A0);
+  color:#000;
+  padding:8px 12px;
+  border-radius:20px;
+  border:0;
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  cursor:pointer;
+  min-width:200px;
+}
+.genre-select option{
+  /* background set inline per-option */
+  color:#000;
+  padding:6px 10px;
+}
+.genre-select option:hover{
+  filter:brightness(0.9);
+}
+/* custom arrow */
+.genre-select-wrapper{position:relative;display:inline-block;}
+.genre-select-wrapper::after{
+  content:'▼';
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  pointer-events:none;
+  color:#000;
+}
+
+/* danger button for delete */
+.btn.danger{background:#ff4d4f;color:#fff;border:2px solid #ff7875;}
+.btn.danger:hover{background:#ff7875;transform:scale(1.03);}
+.btn.danger:active{background:#ff4d4f;transform:scale(0.97);}
 .btn:hover:not(:disabled){transform:scale(1.03)}
 .btn:active:not(:disabled){transform:scale(0.99)}
 .btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}

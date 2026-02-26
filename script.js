@@ -9,11 +9,12 @@
   const cta = document.getElementById('ctaSubmit');
   const closeModal = document.getElementById('closeModal');
   const submitForm = document.getElementById('submitForm');
-  const screenshotsInput = document.getElementById('screenshots');
+  const cardImageInput = document.getElementById('cardImage');
   const genreSelect = submitForm.querySelector('select[name="genre"]');
   const categoryContainer = document.getElementById('categoryContainer');
   const nextPageBtn = document.getElementById('nextPage');
   const searchInput = document.getElementById('searchInput');
+  // Some pages (detail.html) don't have these elements; we'll guard later.
 
   // Auth elements
   const authModal = document.getElementById('authModal');
@@ -133,16 +134,47 @@
     return {ok:true, msg:'Logged in!'};
   }
 
-  // Populate genres
-  GENRES.forEach(g=>{ const o=document.createElement('option'); o.value=g; o.textContent=g; genreSelect.appendChild(o);});
+  // Populate genre <select> (clears existing options first)
+  function getGenreColor(genre){
+    // simple hash to hue
+    let hash = 0;
+    for(let i=0;i<genre.length;i++){ hash = ((hash<<5)-hash)+genre.charCodeAt(i); hash &= hash; }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue},70%,80%)`;
+  }
+
+  function populateGenres(){
+    const form = document.getElementById('submitForm');
+    if(!form) return;
+    const sel = form.querySelector('select[name="genre"]');
+    if(!sel) return;
+    // remove all but first placeholder option
+    while(sel.options.length>1){ sel.remove(1); }
+    GENRES.forEach(g=>{
+      const o = document.createElement('option');
+      o.value = g;
+      o.textContent = g;
+      // assign a light background color
+      o.style.background = getGenreColor(g);
+      o.style.color = '#000';
+      sel.appendChild(o);
+    });
+  }
+
+  // initial fill
+  populateGenres();
 
   // Modal controls
-  function openModal(){ modal.classList.remove('hidden'); }
+  function openModal(){
+    populateGenres();
+    modal.classList.remove('hidden');
+  }
   function closeModalFn(){ modal.classList.add('hidden'); }
-  cta.addEventListener('click', openModal);
-  uploadGameBtn.addEventListener('click', openModal);
-  closeModal.addEventListener('click', closeModalFn);
-  document.getElementById('cancelSubmit').addEventListener('click', closeModalFn);
+  if(cta){ cta.addEventListener('click', openModal); }
+  if(uploadGameBtn){ uploadGameBtn.addEventListener('click', openModal); }
+  if(closeModal){ closeModal.addEventListener('click', closeModalFn); }
+  const cancelBtn = document.getElementById('cancelSubmit');
+  if(cancelBtn){ cancelBtn.addEventListener('click', closeModalFn); }
 
   // Auth modal
   loginBtn.addEventListener('click', ()=>{authMode='login'; authTitle.textContent='Log in'; authModal.classList.remove('hidden'); authForm.reset();});
@@ -172,15 +204,16 @@
     }
   });
 
-  // Screenshot validation: max 10, warn on duplicates by name
-  screenshotsInput.addEventListener('change', (e)=>{
-    const files = Array.from(e.target.files || []);
-    if(files.length>10){ alert('You can upload up to 10 screenshots.'); screenshotsInput.value=''; }
-    // warn duplicates
-    const names = files.map(f=>f.name.toLowerCase());
-    const dupes = names.filter((n,i)=>names.indexOf(n)!==i);
-    if(dupes.length>0){ alert('Duplicate screenshot names detected: '+[...new Set(dupes)].join(', ')); }
-  });
+  // Card image validation (single file)
+  if(cardImageInput){
+    cardImageInput.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(file && !file.type.startsWith('image/')){
+        alert('Please select an image file');
+        cardImageInput.value = '';
+      }
+    });
+  }
 
   // Simple storage hook (replace with cloud SDK e.g., Firebase or S3 + Firestore)
   function saveGameToCloud(game){
@@ -203,75 +236,108 @@
     Object.keys(users).forEach(email=>{
       const key = 'udhub_games_'+email;
       const games = JSON.parse(localStorage.getItem(key)||'[]');
+      // migrate any legacy screenshots to image
+      games.forEach(g=>{
+        if(!g.image && g.screenshots && g.screenshots.length){
+          g.image = g.screenshots[0];
+        }
+      });
       allGames = allGames.concat(games);
     });
     return allGames;
   }
 
+  // Convert files to data URLs
+  function filesToDataURLs(files){
+    return Promise.all(files.map(file=>{
+      return new Promise((resolve)=>{
+        const reader = new FileReader();
+        reader.onload = (e)=>resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    }));
+  }
+
   // Form submit -> create a card and store
-  submitForm.addEventListener('submit', (ev)=>{
+  submitForm.addEventListener('submit', async (ev)=>{
     ev.preventDefault();
     const fd = new FormData(submitForm);
     const title = fd.get('title').trim();
     const genre = fd.get('genre');
     const description = fd.get('description');
     const link = fd.get('link');
-    const files = Array.from(screenshotsInput.files || []);
+    const file = cardImageInput ? cardImageInput.files[0] : null;
 
     if(!title || !genre){ alert('Title and genre required'); return; }
+    if(!file){ alert('Cover image required'); return; }
+
+    // Convert image to data URL
+    const imageData = (await filesToDataURLs([file]))[0];
 
     // warn about lack of link
     if(!link) console.warn('No download link provided - game will be marked unavailable.');
 
-    const game = {id:Date.now(), title, genre, description, link, screenshots:files.map(f=>f.name), developer:'', available:!!link, upvotes:0, comments:[]};
+    const game = {id:Date.now(), title, genre, description, link, image:imageData, developer:'', available:!!link, upvotes:0, comments:[]};
     if(!saveGameToCloud(game)) return;
     renderCategoryRows();
     closeModalFn();
     submitForm.reset();
-    screenshotsInput.value='';
+    if(cardImageInput) cardImageInput.value='';
   });
 
   // UI: render categories with cards
   function createCard(game){
-    const cu = loadCurrentUser();
     const card = document.createElement('div'); card.className='card';
     const shot = document.createElement('div'); shot.className='screenshot';
-    shot.textContent = game.screenshots[0] || 'No screenshot';
-    card.appendChild(shot);
-    const title = document.createElement('div'); title.className='meta'; title.innerHTML = `<strong>${game.title}</strong> • ${game.developer}`;
-    card.appendChild(title);
-    const desc = document.createElement('div'); desc.className='desc'; desc.textContent = game.description || '';
-    card.appendChild(desc);
-    const actions = document.createElement('div'); actions.style.marginTop='8px';
-    const view = document.createElement('button'); view.className='btn small'; view.textContent = game.available ? 'View / Download' : 'Unavailable'; view.disabled = !game.available;
-    if(game.available){ view.addEventListener('click', ()=>{ window.open(game.link, '_blank'); }); }
-    if(!game.available){ const overlay=document.createElement('div'); overlay.className='unavailable-overlay'; overlay.textContent='Unavailable'; card.style.position='relative'; card.appendChild(overlay); }
-    actions.appendChild(view);
-    const up = document.createElement('button'); up.className='btn small'; up.textContent='▲ '+(game.upvotes||0); up.style.marginLeft='8px'; up.addEventListener('click', ()=>{ game.upvotes=(game.upvotes||0)+1; up.textContent='▲ '+game.upvotes; saveUpdatedGame(game); });
-    actions.appendChild(up);
-    
-    // Delete button - only for game uploader
-    if(cu && cu.email===game.developer){
-      const del = document.createElement('button'); del.className='btn small'; del.textContent='🗑️ Delete'; del.style.marginLeft='8px'; del.style.opacity='0.7'; del.addEventListener('click', ()=>{ if(confirm('Delete this game?')){ deleteGame(game.id); renderCategoryRows(); } });
-      actions.appendChild(del);
+    if(game.image){
+      const img = document.createElement('img');
+      img.src = game.image;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      img.style.borderRadius = '8px';
+      shot.appendChild(img);
+    } else {
+      shot.textContent = 'No image';
     }
-    
-    card.appendChild(actions);
+    card.appendChild(shot);
 
-    // comment form
-    const cform = document.createElement('form'); cform.style.marginTop='10px';
-    const cin = document.createElement('input'); cin.placeholder='Comment'; cin.style.width='100%'; cform.appendChild(cin);
-    cform.addEventListener('submit', (e)=>{ e.preventDefault(); if(!cin.value) return; game.comments = game.comments || []; game.comments.push({text:cin.value,at:Date.now()}); saveUpdatedGame(game); renderCategoryRows(); });
-    card.appendChild(cform);
+    const title = document.createElement('div'); title.className='meta';
+    title.innerHTML = `<strong>${game.title}</strong> • ${game.developer}`;
+    card.appendChild(title);
+
+    // description excerpt
+    if(game.description){
+      const desc = document.createElement('div'); desc.className='desc';
+      desc.textContent = game.description.length>100 ? game.description.slice(0,100) + '…' : game.description;
+      card.appendChild(desc);
+    }
+
+    const actions = document.createElement('div'); actions.style.marginTop='8px';
+    const view = document.createElement('button'); view.className='btn small'; view.textContent='View';
+    view.addEventListener('click', ()=>{ window.open(`detail.html?gameId=${game.id}`, '_blank'); });
+    actions.appendChild(view);
+    card.appendChild(actions);
 
     return card;
   }
 
   function saveUpdatedGame(game){
-    const all = loadGames();
-    const i = all.findIndex(g=>g.id===game.id);
-    if(i>=0) all[i]=game; else all.unshift(game);
-    localStorage.setItem('udhub_games', JSON.stringify(all));
+    // persist change back to the correct user's list
+    if(!game.developer){
+      // fallback: global store
+      const all = loadGames();
+      const i = all.findIndex(g=>g.id===game.id);
+      if(i>=0) all[i]=game; else all.unshift(game);
+      localStorage.setItem('udhub_games', JSON.stringify(all));
+      return;
+    }
+    const key = 'udhub_games_' + game.developer;
+    const games = JSON.parse(localStorage.getItem(key) || '[]');
+    const idx = games.findIndex(g=>g.id===game.id);
+    if(idx>=0) games[idx] = game;
+    else games.unshift(game);
+    localStorage.setItem(key, JSON.stringify(games));
   }
 
   function deleteGame(gameId){
@@ -339,33 +405,38 @@
     });
   }
 
-  // Search functionality
-  // Search on Enter key
-  searchInput.addEventListener('keypress', (e)=>{
-    if(e.key==='Enter'){
-      e.preventDefault();
-      searchQuery = searchInput.value.trim();
-      page = 0;
-      renderCategoryRows();
-      if(searchQuery){ 
-        document.getElementById('categories').scrollIntoView({behavior:'smooth'}); 
-      } else {
-        alert('Please enter a game name to search');
+  // Search functionality (guarded in case elements are missing)
+  if(searchInput){
+    // Search on Enter key
+    searchInput.addEventListener('keypress', (e)=>{
+      if(e.key==='Enter'){
+        e.preventDefault();
+        searchQuery = searchInput.value.trim();
+        page = 0;
+        renderCategoryRows();
+        if(searchQuery){ 
+          const cats = document.getElementById('categories');
+          if(cats) cats.scrollIntoView({behavior:'smooth'});
+        } else {
+          alert('Please enter a game name to search');
+        }
       }
-    }
-  });
+    });
 
-  // Clear search on Escape key
-  searchInput.addEventListener('keydown', (e)=>{
-    if(e.key==='Escape'){
-      searchQuery = '';
-      searchInput.value = '';
-      page = 0;
-      renderCategoryRows();
-    }
-  });
+    // Clear search on Escape key
+    searchInput.addEventListener('keydown', (e)=>{
+      if(e.key==='Escape'){
+        searchQuery = '';
+        searchInput.value = '';
+        page = 0;
+        renderCategoryRows();
+      }
+    });
+  }
 
-  nextPageBtn.addEventListener('click', ()=>{ page++; if(page*6>=GENRES.length) page=0; renderCategoryRows(); window.scrollTo({top:document.getElementById('categories').offsetTop,behavior:'smooth'}); });
+  if(nextPageBtn){
+    nextPageBtn.addEventListener('click', ()=>{ page++; if(page*6>=GENRES.length) page=0; renderCategoryRows(); const cats=document.getElementById('categories'); if(cats) window.scrollTo({top:cats.offsetTop,behavior:'smooth'}); });
+  }
 
   // Clear any old demo data from localStorage
   localStorage.removeItem('udhub_games_demo@uprising.dev');
@@ -377,7 +448,59 @@
   }
 
   updateAuthUI();
-  renderCategoryRows();
+  if(categoryContainer){
+    renderCategoryRows();
+  }
+
+  // detail page support
+  function getGameById(id){
+    const all = loadGames();
+    return all.find(g=>g.id==id);
+  } // unchanged
+
+
+  function renderDetailPage(){
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('gameId');
+    if(!id) return;
+    const game = getGameById(id);
+    const container = document.getElementById('gameDetail');
+    if(!container) return;
+    if(!game){
+      container.textContent = 'Game not found';
+      return;
+    }
+
+    // only show uploader to game owner
+    const cu = loadCurrentUser();
+    const owner = cu && cu.email === game.developer;
+    container.innerHTML = `
+      <h2>${game.title}</h2>
+      <p>Developer: ${game.developer}</p>
+      <p>${game.description||''}</p>
+      ${game.link?`<p><a href="${game.link}" target="_blank" class="btn download">Download/View</a></p>`:''}
+      ${game.image?`<div><img src="${game.image}" style="max-width:400px;border-radius:8px;margin:10px 0;"></div>`:''}
+      ${owner?`<button id="deleteGameBtn" class="btn danger">Delete This Game</button>`:''}
+    `;
+
+    // owner delete handler
+    if(owner){
+      const delBtn = container.querySelector('#deleteGameBtn');
+      if(delBtn){
+        delBtn.addEventListener('click', ()=>{
+          if(confirm('Are you sure you want to delete this game?')){
+            deleteGame(game.id);
+            // close the detail tab or redirect to index
+            window.location.href = 'index.html';
+          }
+        });
+      }
+    }
+    // no gallery or additional upload now
+  }
+
+  // run detail renderer in case we are on detail.html
+  renderDetailPage();
 
   // Expose a window hook for real cloud integration
   window.Uprising = {
