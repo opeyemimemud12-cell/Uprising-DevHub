@@ -7,11 +7,19 @@
     "dev": "live-server",
     "serve": "npx http-server"
   },
-  "keywords": ["indie", "games", "devhub", "platform"],
+  "keywords": [
+    "indie",
+    "games",
+    "devhub",
+    "platform"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "live-server": "^1.2.2",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
   }
 }
